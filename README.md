@@ -9,3 +9,8 @@ nodejs 实例项目
 
 ##纠结的问题
 - 所有的文件命名用不用都加后缀？user_dao.js  user_controller.js user_model.js
+
+##启动项目
+supervisor -w ../app,.  application.js
+-w 参数为逗号分割的文件或路径，当这里的文件改变，将自动重启applications.js,这里监听的是app目录和configs目录
+
