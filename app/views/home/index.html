@@ -1,13 +1,25 @@
 {% extends '../layouts/layout.html' %}
 {% block title %}{{title}} {%endblock%}
-{% block head %}
-
-{% endblock %}
+{% block head %}{% endblock %}
 {% block body %}
 <h1>The index page</h1>
+<h2>no cache</h2>
+<h3>{{isAjax}}</h3>
+<div id="ajax" style="width:100px;height:30px;line-height:30px;padding:5px;border-radius:5px;background:#eee;">点击发起Ajax请求</div>
 {% endblock %}
 {% block script %}
 <script>
-    alert(11);
+    $(function(){
+        var isAjax = {{isAjax||false}};
+        $('#ajax').click(function(){
+            $.ajax({
+                url:'/',
+                success:function(data){
+                    console.log(data);
+                }
+            });
+        });
+
+    });
 </script>
 {% endblock %}

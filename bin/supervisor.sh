@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-supervisor -w ../app,../app/views/home/*.html,../configs run.js
+supervisor -w ../app,../configs run.js

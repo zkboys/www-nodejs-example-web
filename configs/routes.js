@@ -1,5 +1,5 @@
 /*
- * 路由映射文件
+ * 路由映射文件,配置越靠前，优先级越高
  * */
 
 var express = require('express');
