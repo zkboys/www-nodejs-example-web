@@ -25,13 +25,13 @@
             root: './',//当前路径
             source: {
                 root: './',
-                styles: './less/',
-                scripts: './js/',
-                fonts: './fonts/',
-                img: './img/'
+                styles: './build/less/',
+                scripts: './build/js/',
+                fonts: './build/fonts/',
+                img: './build/img/'
             },
             public: {
-                root: '../../public',
+                root: '../../public/',
                 styles: '../../public/css/',
                 scripts: '../../public/js/',
                 fonts: '../../public/fonts/',
@@ -57,6 +57,7 @@
     //        ['ws://www.j.com:8084/soc', 'ws://pre.aiwanr.com:8084/soc']
     //    ];
     //}
+    //TODO 改成计算文件的md5
     var timestamp = new Date().getTime();
     var replaceFontUrl = [
         ["iconfont.eot", "iconfont.eot?v=" + timestamp],
@@ -66,7 +67,7 @@
         ["iconfont.svg#iconfont", "iconfont.svg?v=" + timestamp + "#iconfont"]
     ];
     gulp.task('styles', function (cb) {
-        gulp.src([paths.source.styles + 'app.less'])//标记要处理的文件，读文件过程
+        gulp.src([paths.source.styles + 'main.less'])//标记要处理的文件，读文件过程
             .pipe(less({
                 paths: [path.join(__dirname, 'less', 'includes')]
             }))
@@ -113,40 +114,24 @@
                 cb();
             });
     });
-    gulp.task('simditor', function (cb) {
-        gulp.src([paths.root + 'simditor-2.3.2/**'])
-            .pipe(gulp.dest(paths.public.root + '/simditor/'))
-            .on('end', function () {//完成后的回调，继续执行其他任务？
-                cb();
-            });
-    });
-    gulp.task('datetime-js', function (cb) {
-        gulp.src([
-            paths.root + 'datetime/public/js/datetime.js',
-            paths.root + 'datetime/public/js/datetime.min.js'
-        ])
-            .pipe(gulp.dest(paths.public.scripts))
-            .on('end', function () {//完成后的回调，继续执行其他任务？
-                cb();
-            });
-    });
-    gulp.task('datetime-css', function (cb) {
-        gulp.src([
-            paths.root + 'datetime/public/css/datetime.css',
-            paths.root + 'datetime/public/css/datetime.min.css'
-        ])
-            .pipe(gulp.dest(paths.public.styles))
-            .on('end', function () {//完成后的回调，继续执行其他任务？
-                cb();
-            });
-    });
 
-    gulp.task('framework', function (cb) {
+    gulp.task('AdminLTE-master', function (cb) {
         gulp.src([
-            paths.root + 'framework/dist/**'
-        ])
+                '../AdminLTE-master/dist/**',
+                '../AdminLTE-master/bootstrap/**'
+            ])
             .pipe(gulp.dest(paths.public.root))
-            .on('end', function () {//完成后的回调，继续执行其他任务？
+            .on('end', function () {
+                cb();
+            });
+    });
+    gulp.task('plugins', function (cb) {
+        gulp.src([
+                paths.root + 'plugins/**',
+                '../AdminLTE-master/plugins/**'
+            ])
+            .pipe(gulp.dest(paths.public.root + 'plugins/'))
+            .on('end', function () {
                 cb();
             });
     });
@@ -159,9 +144,6 @@
         gulp.watch(paths.source.styles + '*.*', ['styles']).on('change', function (event) {
             watcherLog(event);
         });
-        gulp.watch(paths.root + 'framework/dist/**', ['framework']).on('change', function (event) {
-            watcherLog(event);
-        });
     });
     function watcherLog(event) {
         var filePath = event.path;
@@ -172,8 +154,8 @@
     //由于调用顺序问题，这个任务无法加到default中，需要手动处理
     gulp.task('clean', function (cb) {
         del([
-            paths.public.root + '/**/*'
+            paths.public.root + '**/*'
         ], {force: true}, cb);
     });
-    gulp.task('default', ['styles', 'img', 'fonts', 'scripts', 'simditor', 'datetime-js', 'datetime-css', 'framework']);
+    gulp.task('default', ['styles', 'img', 'fonts', 'scripts', 'AdminLTE-master', 'plugins']);
 })();

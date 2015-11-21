@@ -5,6 +5,8 @@ var express = require('express')
     , cookieParser = require('cookie-parser')
     , bodyParser = require('body-parser')
     , swig = require('swig')
+    , rf = require("fs")
+    , crypto = require('crypto')
 
     , routes = require('./routes')
     , configs = require('./configs');
@@ -57,34 +59,25 @@ app.use(cookieParser(config.cookie_secret));
 //app.use(express.static(path.join(siteRootPath, 'public')));
 // 创建一个虚拟目录，对应的连接要写成/s/css/common.css
 app.use(config.static_url_prefix, express.static(path.join(siteRootPath, 'public')));
-
+// app.locals中的属性，html模板语言可以直接访问，controller中可以通过req.app.locals访问。
+app.locals.static_url = function (filePath) {
+    /* 实现方案：
+     * 读取本地服务器文件，计算md5,拼接查询字符串:v=xxxxxxxxxxxxx
+     * TODO 设置一个缓存，要来缓存文件的md5,不要每次都计算，服务器重启时会清空缓存。
+     * nginx配置静态文件缓存为永久有效。
+     * TODO 模板本身有没有提供一个这样的方法？
+     * */
+    var data = rf.readFileSync(path.join(siteRootPath, 'public', filePath), "utf-8");
+    var fileMD5 = crypto.createHash('md5').update(data).digest('hex');
+    return config.static_url_prefix + filePath + '?v=' + fileMD5;
+};
 app.use(function (req, res, next) {
     //所有的请求都会先经过这里，可以在这里做一些操作
-    var headers = req.headers;
-    var isAjax = false;
-    if ('x-requested-with' in headers && headers["x-requested-with"].toLowerCase() == "xmlhttprequest") {
-        isAjax = true;
-    }
-    swig.setDefaults({
-        locals: {
-            isAjax: isAjax,
-            static_url: function (path) {// TODO 模板本身有没有提供一个这样的方法？
-                //TODO 计算文件的MD5,拼接查询字符串。
-                /*
-                 * 实现方案：
-                 * 读取本地服务器文件，计算md5,拼接查询字符串:v=xxxxxxxxxxxxx
-                 * 设置一个缓存，要来缓存文件的md5,不要每次都计算，服务器重启时会清空缓存。
-                 * nginx配置静态文件缓存为永久有效。
-                 * 如果使用cdn怎么办？每次版本发布清空cdn？还是cdn本身会处理查询字符串？
-                 *
-                 * */
-                return config.static_url_prefix + path;
-            }
-        }
-    });
+    // res.locals的方法，模板语言也可以直接访问
+    res.locals.isAjax = req.xhr;
     next();
 });
-app.use('/',routes);
+app.use('/', routes);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -102,7 +95,8 @@ if (app.get('env') === 'development') {
         res.status(err.status || 500);
         res.render('error', {
             message: err.message,
-            error: err
+            status: err.status,
+            stack: err.stack
         });
     });
 }
@@ -113,7 +107,8 @@ app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.render('error', {
         message: err.message,
-        error: {}
+        status: err.status,
+        stack: ''
     });
 });
 
