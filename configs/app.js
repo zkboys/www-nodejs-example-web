@@ -9,7 +9,8 @@ var express = require('express')
     , crypto = require('crypto')
 
     , routes = require('./routes')
-    , configs = require('./configs');
+    , configs = require('./configs')
+    , staticFilesMD5Map = {};
 
 var app = express();
 var run_mod = app.get('env');
@@ -19,28 +20,7 @@ var siteRootPath = __dirname.substring(0, __dirname.length - 8);
 app.set('views', path.join(siteRootPath, 'app', 'views'));
 app.set('view engine', 'html');
 app.engine('html', swig.renderFile);
-//扩展 swig的全局方法。在这里扩展就没法使用res了。。。
-/*
-
- swig.setDefaults({
- locals: {
- static_url: function (path) {// TODO 模板本身有没有提供一个这样的方法？
- //TODO 计算文件的MD5,拼接查询字符串。
- /!*
- * 实现方案：
- * 读取本地服务器文件，计算md5,拼接查询字符串:v=xxxxxxxxxxxxx
- * 设置一个缓存，要来缓存文件的md5,不要每次都计算，服务器重启时会清空缓存。
- * nginx配置静态文件缓存为永久有效。
- * 如果使用cdn怎么办？每次版本发布清空cdn？还是cdn本身会处理查询字符串？
- *
- * *!/
- return config.static_url_prefix + path;
- }
- }
- });
- */
-
-if (run_mod !== 'production') {//非生产环境下，不是用缓存
+if (run_mod !== 'production') {//非生产环境下，不使用缓存
     // Swig will cache templates for you, but you can disable that and use Express's caching instead, if you like:
     app.set('view cache', false);
     // To disable Swig's cache, do the following:
@@ -58,17 +38,20 @@ app.use(cookieParser(config.cookie_secret));
 // 对应的连接写成：/css/common.css
 //app.use(express.static(path.join(siteRootPath, 'public')));
 // 创建一个虚拟目录，对应的连接要写成/s/css/common.css
-app.use(config.static_url_prefix, express.static(path.join(siteRootPath, 'public')));
+app.use(config.static_url_prefix, express.static(path.join(siteRootPath, 'public'), {maxAge: 60 * 60 * 24 * 365 * 10, etag: true, lastModified: true}));
 // app.locals中的属性，html模板语言可以直接访问，controller中可以通过req.app.locals访问。
 app.locals.static_url = function (filePath) {
     /* 实现方案：
-     * 读取本地服务器文件，计算md5,拼接查询字符串:v=xxxxxxxxxxxxx
-     * TODO 设置一个缓存，要来缓存文件的md5,不要每次都计算，服务器重启时会清空缓存。
+     * 读取本地服务器文件，计算md5,拼接查询字符串:v=xxxxxxxxxxxxx,并缓存计算结果。
      * nginx配置静态文件缓存为永久有效。
      * TODO 模板本身有没有提供一个这样的方法？
      * */
-    var data = rf.readFileSync(path.join(siteRootPath, 'public', filePath), "utf-8");
-    var fileMD5 = crypto.createHash('md5').update(data).digest('hex');
+    var fileMD5 = staticFilesMD5Map[filePath];
+    if (!fileMD5) {
+        var data = rf.readFileSync(path.join(siteRootPath, 'public', filePath), "utf-8");
+        fileMD5 = crypto.createHash('md5').update(data).digest('hex');
+        staticFilesMD5Map[filePath] = fileMD5;
+    }
     return config.static_url_prefix + filePath + '?v=' + fileMD5;
 };
 app.use(function (req, res, next) {
