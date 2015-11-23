@@ -40,6 +40,7 @@ app.use(cookieParser(config.cookie_secret));
 // 创建一个虚拟目录，对应的连接要写成/s/css/common.css
 app.use(config.static_url_prefix, express.static(path.join(siteRootPath, 'public'), {maxAge: 60 * 60 * 24 * 365 * 10, etag: true, lastModified: true}));
 // app.locals中的属性，html模板语言可以直接访问，controller中可以通过req.app.locals访问。
+app.locals.siteName=config.sitename;
 app.locals.static_url = function (filePath) {
     /* 实现方案：
      * 读取本地服务器文件，计算md5,拼接查询字符串:v=xxxxxxxxxxxxx,并缓存计算结果。
