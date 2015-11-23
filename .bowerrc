@@ -1,3 +1,14 @@
 {
-  "directory" : "assets"
+  "directory": "assets",
+  "analytics": false,
+  "timeout": 120000,
+  "registry": {
+    "register": "http://localhost:5678/",
+    "publish": "http://localhost:5678/",
+    "search": [
+      "http://localhost:5678/"
+    ]
+  }
 }
+
+
