@@ -62,11 +62,12 @@ app.locals.static_url = function (filePath) {
     return config.static_url_prefix + filePath + '?v=' + fileMD5;
 };
 
-app.use(csrf());// 会创建 req.session.csrfSecret属性
+app.use(csrf());// 会创建 req.session.csrfSecret属性 但是这个属相好像过时了,以前的api有用到.
+//app.use('/book', csrf()); // 可以具体精确到哪些请求使用csrf
 app.use(function (req, res, next) {
     //所有的请求都会先经过这里，可以在这里做一些操作
     // res.locals的方法，模板语言也可以直接访问
-    res.locals.csrf = req.csrfToken();
+    res.locals.csrf = req.csrfToken ? req.csrfToken() : '';
     res.locals.isAjax = req.xhr;
     next();
 });
