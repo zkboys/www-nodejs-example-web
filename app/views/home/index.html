@@ -46,7 +46,16 @@
 <section class="content">
     <h3>{{isAjax}}</h3>
 
-    <div id="ajax" class="btn btn-info">点击发起Ajax请求</div>
+    <div id="ajax-get" class="btn btn-info">点击发起Ajax GET请求</div>
+    <div id="ajax-post" class="btn btn-info">点击发起Ajax POST请求</div>
+    <h3>_csrf</h3>
+    <p>{{csrf}}</p>
+
+    <form action="/" method="post">
+        <input type="hidden" name="_csrf" value="{{csrf}}">
+        <input type="submit" name="submit" value="提交">
+    </form>
+
 </section>
 
 {% endblock %}
@@ -54,9 +63,19 @@
 <script>
     $(function () {
         var isAjax = '{{isAjax||false}}';
-        $('#ajax').click(function () {
+        $('#ajax-get').click(function () {
             $.ajax({
                 url: '/',
+                success: function (data) {
+                    console.log(data);
+                }
+            });
+        });
+        $('#ajax-post').click(function () {
+            $.ajax({
+                type:'POST',
+                url: '/',
+                data:{'_csrf':$('input[name=_csrf]').val()},
                 success: function (data) {
                     console.log(data);
                 }

@@ -7,11 +7,14 @@ var express = require('express')
     , swig = require('swig')
     , rf = require("fs")
     , crypto = require('crypto')
+    , session = require('express-session')
+    , csrf = require('csurf')
 
     , routes = require('./routes')
     , configs = require('./configs')
     , staticFilesMD5Map = {};
-
+var memoryStore = session.MemoryStore;
+var sessionStore = new memoryStore();
 var app = express();
 var run_mod = app.get('env');
 var config = configs[run_mod] || configs['development'];
@@ -35,6 +38,9 @@ app.use(bodyParser.urlencoded({extended: false}));
 //TODO cookie怎么跟域名绑定，比如，我如果通过ip直接访问项目，cookie是无效的，必须使用域名访问。
 //TODO cookie的加密算法？底层实现了？
 app.use(cookieParser(config.cookie_secret));
+app.use(session({
+    secret: config.cookie_secret
+}));
 // 对应的连接写成：/css/common.css
 //app.use(express.static(path.join(siteRootPath, 'public')));
 // 创建一个虚拟目录，对应的连接要写成/s/css/common.css
@@ -55,9 +61,12 @@ app.locals.static_url = function (filePath) {
     }
     return config.static_url_prefix + filePath + '?v=' + fileMD5;
 };
+
+app.use(csrf());// 会创建 req.session.csrfSecret属性
 app.use(function (req, res, next) {
     //所有的请求都会先经过这里，可以在这里做一些操作
     // res.locals的方法，模板语言也可以直接访问
+    res.locals.csrf = req.csrfToken();
     res.locals.isAjax = req.xhr;
     next();
 });
@@ -76,6 +85,7 @@ app.use(function (req, res, next) {
 // will print stacktrace
 if (run_mod === 'development') {
     app.use(function (err, req, res, next) {
+        console.log(err);
         res.status(err.status || 500);
         res.render('error', {
             message: err.message,
