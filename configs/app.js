@@ -13,12 +13,11 @@ var express = require('express')
     , routes = require('./routes')
     , configs = require('./configs')
     , staticFilesMD5Map = {};
-var memoryStore = session.MemoryStore;
-var sessionStore = new memoryStore();
 var app = express();
 var run_mod = app.get('env');
 var config = configs[run_mod] || configs['development'];
 var siteRootPath = __dirname.substring(0, __dirname.length - 8);
+
 // view engine setup
 app.set('views', path.join(siteRootPath, 'app', 'views'));
 app.set('view engine', 'html');
