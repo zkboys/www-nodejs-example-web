@@ -18,7 +18,7 @@ router.get('/', function (req, res, next) {
 router.post('/', function (req, res, next) {
     res.send({title: 'Express'});
 });
-router.get('/index', example.index);//需要登录才能访问的方法前面添加authenticated
+router.get('/index',authenticated, example.index);//需要登录才能访问的方法前面添加authenticated
 router.all('/book', authenticated);// 所有的/book请求都需要登录
 router.route('/book')
     .get(function (req, res) {
